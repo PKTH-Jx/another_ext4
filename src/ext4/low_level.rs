@@ -240,7 +240,8 @@ impl Ext4 {
         let mut cursor = 0;
         let mut iblock = start_iblock;
         while cursor < write_size {
-            let write_len = min(BLOCK_SIZE, write_size - cursor);
+            let block_offset = (offset + cursor) % BLOCK_SIZE;
+            let write_len = min(BLOCK_SIZE - block_offset, write_size - cursor);
             let fblock = self.extent_query(&file, iblock)?;
             let mut block = self.read_block(fblock);
             block.write_offset(
