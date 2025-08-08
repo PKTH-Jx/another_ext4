@@ -92,7 +92,10 @@ impl DirEntry {
 
     /// Compare the name of the directory entry with a given name
     pub fn compare_name(&self, name: &str) -> bool {
-        &self.name[..name.len()] == name.as_bytes()
+        if self.name_len as usize == name.len() {
+            return &self.name[..name.len()] == name.as_bytes();
+        }
+        false
     }
 
     /// Check if the directory entry is unused (inode = 0)
