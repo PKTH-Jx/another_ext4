@@ -92,7 +92,7 @@ impl DirEntry {
 
     /// Compare the name of the directory entry with a given name
     pub fn compare_name(&self, name: &str) -> bool {
-        if self.name_len as usize == name.len() {
+        if self.name_len as usize == name.as_bytes().len() {
             return &self.name[..name.len()] == name.as_bytes();
         }
         false
