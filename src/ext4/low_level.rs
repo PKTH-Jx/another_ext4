@@ -192,10 +192,17 @@ impl Ext4 {
         // Continue with full block reads
         while cursor < read_size {
             let read_len = min(BLOCK_SIZE, read_size - cursor);
-            let fblock = self.extent_query(&file, iblock).unwrap();
-            let block = self.read_block(fblock);
-            // Copy data from block to the user buffer
-            buf[cursor..cursor + read_len].copy_from_slice(block.read_offset(0, read_len));
+            let fblock = match self.extent_query(&file, iblock) {
+                Ok(fblock) => {
+                    // normal
+                    let block = self.read_block(fblock);
+                    buf[cursor..cursor + read_len].copy_from_slice(block.read_offset(0, read_len));
+                }
+                Err(_) => {
+                    // hole
+                    buf[cursor..cursor + read_len].fill(0);
+                }
+            };
             cursor += read_len;
             iblock += 1;
         }
@@ -240,7 +247,8 @@ impl Ext4 {
         let mut cursor = 0;
         let mut iblock = start_iblock;
         while cursor < write_size {
-            let write_len = min(BLOCK_SIZE, write_size - cursor);
+            let block_offset = (offset + cursor) % BLOCK_SIZE;
+            let write_len = min(BLOCK_SIZE - block_offset, write_size - cursor);
             let fblock = self.extent_query(&file, iblock)?;
             let mut block = self.read_block(fblock);
             block.write_offset(
